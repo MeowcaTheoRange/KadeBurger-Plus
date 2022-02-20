@@ -6,6 +6,7 @@ import funkin.Conductor;
 import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.graphics.frames.FlxAtlasFrames;
 import flixel.FlxSprite;
+import flixel.text.FlxText;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
 import flixel.FlxSubState;
@@ -37,11 +38,55 @@ class PlayState extends FlxUIState
     private var burgsFlipped:Array<FlxSprite> = [];
     private var missed:Int = 0;
     private var missCounter:Array<FlxSprite> = [];
+    private var flipTimes:Array<Float> = [];
+    private var scoreCounts:Array<String> = [
+        "assets/images/ratings/bad.png",
+        "assets/images/ratings/bad.png",
+        "assets/images/ratings/ok.png",
+        "assets/images/ratings/ok.png",
+        "assets/images/ratings/good.png",
+        "assets/images/ratings/good.png",
+        "assets/images/ratings/perfect.png",
+        "assets/images/ratings/perfect.png",
+        "assets/images/ratings/perfect.png",
+        "assets/images/ratings/perfect.png",
+        "assets/images/ratings/perfect.png",
+        "assets/images/ratings/perfect.png",
+        "assets/images/ratings/perfect.png",
+        "assets/images/ratings/perfect.png",
+        "assets/images/ratings/perfect.png",
+        "assets/images/ratings/perfect.png",
+        "assets/images/ratings/good.png",
+        "assets/images/ratings/good.png",
+        "assets/images/ratings/good.png",
+        "assets/images/ratings/good.png",
+        "assets/images/ratings/good.png",
+        "assets/images/ratings/ok.png",
+        "assets/images/ratings/ok.png",
+        "assets/images/ratings/ok.png",
+        "assets/images/ratings/ok.png",
+        "assets/images/ratings/ok.png",
+        "assets/images/ratings/fine.png",
+        "assets/images/ratings/fine.png",
+        "assets/images/ratings/fine.png",
+        "assets/images/ratings/bad.png",
+        "assets/images/ratings/bad.png",
+        "assets/images/ratings/bad.png",
+        "assets/images/ratings/bad.png",
+        "assets/images/ratings/bad.png",
+        "assets/images/ratings/bad.png",
+        "assets/images/ratings/bad.png"
+    ]; //Images loaded with a score from -6 (0) to 30 (36)
+    private var lastFlip:Float = 0;
+    private var avgScore:FlxSprite;
+    private var avgNum:Int = 0;
 
     private var paused:Bool = false;
 
     override function create() // 185
     {
+        avgScore = new FlxSprite(FlxG.width - 300, 0).loadGraphic("assets/images/ratings/perfect.png");
+        avgScore.scale.set(0.5, 0.5);
         add(new FlxSprite().loadGraphic('assets/images/kitch.png'));
         add(new FlxSprite(97, 431).loadGraphic('assets/images/belt.png'));
         var blu:FlxSprite = new FlxSprite(97, 431).loadGraphic('assets/images/belt.png');
@@ -89,7 +134,7 @@ class PlayState extends FlxUIState
             add(thing);
             missCounter.push(thing);
         }
-
+        add(avgScore);
         Conductor.changeBPM(_song.bpm);
 
         super.create();
@@ -107,15 +152,17 @@ class PlayState extends FlxUIState
             if (FlxG.keys.justPressed.SPACE && !paused) {
                 kade.animation.play('flip', true);
                 kade.offset.set(89, 67);
-                if (burger.canBeFlipped && !burger.tooLate)
+                if (burger.canBeFlipped && !burger.tooLate) {
+                    lastFlip = burger.flipTime - (Conductor.songPosition - Conductor.safeZoneOffset);
                     flipBurger(burger);
+                }
             }
         });
 
         for (burg in burgsFlipped)
         {
             burg.x += #if web 6 #else 3 #end;
-            if (burg.x > 1280) {
+            if (burg.x > FlxG.width) {
                 burgsFlipped.remove(burg);
                 burg.kill();
             }
@@ -127,7 +174,7 @@ class PlayState extends FlxUIState
         }
 
         if (Conductor.songPosition > lastStep + Conductor.stepCrochet - Conductor.safeZoneOffset // we are NOT going to talk about how this is sto- I mean uhh """borrowed""" from FNF.
-			|| Conductor.songPosition < lastStep + Conductor.safeZoneOffset)
+			|| Conductor.songPosition < lastStep + Conductor.safeZoneOffset)                     // I don't think anybody would care  -mtr
 		{
 			if (Conductor.songPosition > lastStep + Conductor.stepCrochet)
 				stepHit();
@@ -185,6 +232,43 @@ class PlayState extends FlxUIState
 
     private function flipBurger(burger:Burger):Void
     {
+        flipTimes.push(lastFlip);
+        var temp_allNums:Float = 0;
+        for (i in flipTimes) {
+            temp_allNums += i;
+        }
+        avgNum = Math.round((temp_allNums / flipTimes.length) / 10);
+        avgScore.loadGraphic(scoreCounts[avgNum + 6]);
+        var kgm = kade.getGraphicMidpoint();
+        var scoreIs = scoreCounts[Math.round(lastFlip / 10) + 6];
+        var score:FlxText = new FlxText(0, 0, 0, Std.string(Math.round(lastFlip * 100) / 100), 35);
+        score.screenCenter();
+        score.color = 0xFFFFFF;
+        score.setBorderStyle(OUTLINE, 0x000000, 4, 1);
+        score.moves = true;
+		score.acceleration.y = 600;
+		score.velocity.y -= 150;
+        
+		score.velocity.x += FlxG.random.int(1, 10);
+        var rating:FlxSprite = new FlxSprite(0, kade.y).loadGraphic(scoreIs);
+        rating.screenCenter(X);
+		rating.acceleration.y = 600;
+		rating.velocity.y -= 150;
+        
+		rating.velocity.x += FlxG.random.int(1, 10);
+        add(rating);
+        add(score);
+        FlxTween.tween(rating, {alpha: 0}, 0.5, {
+			startDelay: Conductor.crochet * 0.001
+		});
+        FlxTween.tween(score, {alpha: 0}, 0.5, {
+			onComplete: function(tween:FlxTween)
+			{
+				score.destroy();
+				rating.destroy();
+			},
+			startDelay: Conductor.crochet * 0.001
+		});
         var flip:FlxSprite = new FlxSprite(kade.x + 75, kade.y + 75);
         flip.frames = FlxAtlasFrames.fromSparrow('assets/images/flipped_burger.png', 'assets/images/flipped_burger.xml');
         flip.animation.addByPrefix('idle', 'burgflip', 24, false);

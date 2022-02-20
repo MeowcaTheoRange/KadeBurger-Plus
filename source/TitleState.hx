@@ -20,7 +20,7 @@ class TitleState extends FlxUIState
 
     override function create()
     {
-        add(new FlxSprite().loadGraphic('assets/images/kitch.png'));
+        add(new FlxSprite().loadGraphic('assets/images/kitch1.png'));
 
         var logo:FlxSprite = new FlxSprite().loadGraphic('assets/images/logo.png');
         logo.angle = -10;
