@@ -42,6 +42,14 @@ class PlayState extends FlxUIState
     private var scoreCounts:Array<String> = [
         "assets/images/ratings/bad.png",
         "assets/images/ratings/bad.png",
+        "assets/images/ratings/bad.png",
+        "assets/images/ratings/bad.png",
+        "assets/images/ratings/bad.png",
+        "assets/images/ratings/bad.png",
+        "assets/images/ratings/bad.png",
+        "assets/images/ratings/bad.png",
+        "assets/images/ratings/bad.png",
+        "assets/images/ratings/bad.png",
         "assets/images/ratings/ok.png",
         "assets/images/ratings/ok.png",
         "assets/images/ratings/good.png",
@@ -76,10 +84,12 @@ class PlayState extends FlxUIState
         "assets/images/ratings/bad.png",
         "assets/images/ratings/bad.png",
         "assets/images/ratings/bad.png"
-    ]; //Images loaded with a score from -6 (0) to 30 (36)
+    ]; //Images loaded with a score from -14 (0) to 30 (44)
     private var lastFlip:Float = 0;
     private var avgScore:FlxSprite;
+    private var burgerTxt:FlxText;
     private var avgNum:Int = 0;
+    private var pressAlreadyFlipped:Bool = false;
 
     private var paused:Bool = false;
 
@@ -87,6 +97,10 @@ class PlayState extends FlxUIState
     {
         avgScore = new FlxSprite(FlxG.width - 300, 0).loadGraphic("assets/images/ratings/perfect.png");
         avgScore.scale.set(0.5, 0.5);
+        burgerTxt = new FlxText(FlxG.width - 300, 150, 300, "0 BURGERS", 35);
+        burgerTxt.setBorderStyle(OUTLINE, FlxColor.BLACK, 2, 1);
+        burgerTxt.color = FlxColor.WHITE;
+        burgerTxt.alignment = CENTER;
         add(new FlxSprite().loadGraphic('assets/images/kitch.png'));
         add(new FlxSprite(97, 431).loadGraphic('assets/images/belt.png'));
         var blu:FlxSprite = new FlxSprite(97, 431).loadGraphic('assets/images/belt.png');
@@ -102,7 +116,7 @@ class PlayState extends FlxUIState
         flipping_burgers = new FlxTypedGroup<FlxSprite>();
         add(flipping_burgers);
 
-        kade = new KadeDev(FlxG.width - 818 + 100, FlxG.height - 755 + 100);
+        kade = new KadeDev(FlxG.width - 818 + 150, FlxG.height - 755 + 100);
         add(kade);
 
         FlxG.sound.playMusic('assets/music/song.${TitleState.ext}');
@@ -134,6 +148,7 @@ class PlayState extends FlxUIState
             add(thing);
             missCounter.push(thing);
         }
+        add(burgerTxt);
         add(avgScore);
         Conductor.changeBPM(_song.bpm);
 
@@ -152,10 +167,14 @@ class PlayState extends FlxUIState
             if (FlxG.keys.justPressed.SPACE && !paused) {
                 kade.animation.play('flip', true);
                 kade.offset.set(89, 67);
-                if (burger.canBeFlipped && !burger.tooLate) {
+                if (burger.canBeFlipped && !burger.tooLate && !pressAlreadyFlipped) {
+                    pressAlreadyFlipped = true;
                     lastFlip = burger.flipTime - (Conductor.songPosition - Conductor.safeZoneOffset);
                     flipBurger(burger);
                 }
+            }
+            if (FlxG.keys.justReleased.SPACE && !paused) {
+                pressAlreadyFlipped = false;
             }
         });
 
@@ -233,18 +252,19 @@ class PlayState extends FlxUIState
     private function flipBurger(burger:Burger):Void
     {
         flipTimes.push(lastFlip);
+        burgerTxt.text = "" + flipTimes.length + " BURGERS";
         var temp_allNums:Float = 0;
         for (i in flipTimes) {
             temp_allNums += i;
         }
         avgNum = Math.round((temp_allNums / flipTimes.length) / 10);
-        avgScore.loadGraphic(scoreCounts[avgNum + 6]);
+        avgScore.loadGraphic(scoreCounts[avgNum + 14]);
         var kgm = kade.getGraphicMidpoint();
-        var scoreIs = scoreCounts[Math.round(lastFlip / 10) + 6];
+        var scoreIs = scoreCounts[Math.round(lastFlip / 10) + 14];
         var score:FlxText = new FlxText(0, 0, 0, Std.string(Math.round(lastFlip * 100) / 100), 35);
         score.screenCenter();
-        score.color = 0xFFFFFF;
-        score.setBorderStyle(OUTLINE, 0x000000, 4, 1);
+        score.color = FlxColor.WHITE;
+        score.setBorderStyle(OUTLINE, FlxColor.BLACK, 4, 1);
         score.moves = true;
 		score.acceleration.y = 600;
 		score.velocity.y -= 150;
@@ -269,7 +289,7 @@ class PlayState extends FlxUIState
 			},
 			startDelay: Conductor.crochet * 0.001
 		});
-        var flip:FlxSprite = new FlxSprite(kade.x + 75, kade.y + 75);
+        var flip:FlxSprite = new FlxSprite(kade.x + 105, kade.y + 75);
         flip.frames = FlxAtlasFrames.fromSparrow('assets/images/flipped_burger.png', 'assets/images/flipped_burger.xml');
         flip.animation.addByPrefix('idle', 'burgflip', 24, false);
         flip.animation.play('idle');

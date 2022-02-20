@@ -11,6 +11,7 @@ class Burger extends FlxSprite
 
     public static var offsetX:Float = 700;
     public static var offsetY:Float = 560;
+    public static var allowance:Int = 75;
 
     public function new(x:Float = 0, y:Float = 0, flipTime:Float = 0)
     {
@@ -25,9 +26,9 @@ class Burger extends FlxSprite
 
     override function update(elapsed:Float)
     {
-        canBeFlipped = (flipTime > Conductor.songPosition - Conductor.safeZoneOffset && flipTime < Conductor.songPosition + (Conductor.safeZoneOffset * 0.5));
+        canBeFlipped = (flipTime > (Conductor.songPosition - Conductor.safeZoneOffset) - allowance && flipTime < Conductor.songPosition + (Conductor.safeZoneOffset * 0.5));
 
-        if (flipTime < Conductor.songPosition - Conductor.safeZoneOffset)
+        if (flipTime < (Conductor.songPosition - Conductor.safeZoneOffset) - allowance)
             tooLate = true;
     }
 }
